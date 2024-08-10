@@ -1,0 +1,67 @@
+
+doc = App.ActiveDocument
+doc.openTransaction()
+
+targets=[]
+
+def isSame(e,eprime):
+	if e.isEqual(eprime):
+		return True
+		
+	eprime.reverse()
+	if e.isEqual(eprime):
+		return True
+		
+	return False
+		
+def faceEdges(obj, sobj):
+	oe = obj.Shape.Edges
+	soe = sobj.Edges
+	for i,j in enumerate(oe,start=1):
+		for se in soe:
+			if isSame(se, j):
+				targets.append( (obj, 'Edge{}'.format(i)) )
+
+try:
+	s = FreeCADGui.Selection.getCompleteSelection()
+	subject=s[0].Object
+
+	for sel in s[1:]:
+		if '' == sel.SubElementNames[0]:
+			for i,j in enumerate(sel.Object.Shape.Edges, start=1):
+				targets.append( (sel.Object, 'Edge{}'.format(i)) )
+				print(i)
+		elif 'Face' in sel.SubElementNames[0]:
+			faceEdges(sel.Object, sel.SubObjects[0])
+		else:
+			for e in sel.SubElementNames:
+				targets.append( (sel.Object, e) )
+
+	print ("Targets:", targets)
+		
+	sweeps=[]
+	for o,e in targets:
+		c=Draft.make_clone(subject)
+		c.AttachmentSupport = [o,e]
+		c.MapMode='NormalToEdge'
+		
+		swp=doc.addObject('Part::Sweep','Sweep')
+		
+		swp.Sections=[c]
+		swp.Spine=c.AttachmentSupport[0]
+		swp.Solid=True
+		swp.Frenet=True
+		sweeps.append(swp.Name)
+	
+	if len(sweeps) >1:
+		from BOPTools import BOPFeatures
+		bp = BOPFeatures.BOPFeatures(doc)
+		bp.make_multi_fuse(sweeps)
+		
+except Exception as e :
+	doc.abortTransaction()
+	raise(e)
+else:
+	doc.commitTransaction()
+
+App.ActiveDocument.recompute()

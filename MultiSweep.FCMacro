@@ -30,28 +30,41 @@ def isSame(e,eprime):
 		
 	return False
 		
-def faceEdges(obj, sobj):
-	oe = obj.Shape.Edges
-	soe = sobj.Edges
-	for i,j in enumerate(oe,start=1):
-		for se in soe:
+def faceEdges(obj, sobj, res):
+	for i,j in enumerate(obj.Shape.Edges,start=1):
+		for se in sobj.Edges:
 			if isSame(se, j):
-				targets.append( (obj, 'Edge{}'.format(i)) )
+				res.append( (obj, 'Edge{}'.format(i)) )
 
+def SelectionsToEdges(s):
+	targets=[]
+	
+	for sel in s:
+		if '' == sel.SubElementNames[0]:
+			for i,j in enumerate(sel.Object.Shape.Edges, start=1):
+				targets.append( (sel.Object, 'Edge{}'.format(i)) )
+		elif 'Face' in sel.SubElementNames[0]:
+			faceEdges(sel.Object, sel.SubObjects[0], targets)
+		else:
+			for e in sel.SubElementNames:
+				targets.append( (sel.Object, e) )
+	return targets
+	
 try:
 	s = FreeCADGui.Selection.getCompleteSelection()
 	subject=s[0].Object
 
-	for sel in s[1:]:
-		if '' == sel.SubElementNames[0]:
-			for i,j in enumerate(sel.Object.Shape.Edges, start=1):
-				targets.append( (sel.Object, 'Edge{}'.format(i)) )
-				print(i)
-		elif 'Face' in sel.SubElementNames[0]:
-			faceEdges(sel.Object, sel.SubObjects[0])
-		else:
-			for e in sel.SubElementNames:
-				targets.append( (sel.Object, e) )
+	targets = SelectionsToEdges(s[1:])
+#	for sel in s[1:]:
+#		if '' == sel.SubElementNames[0]:
+#			for i,j in enumerate(sel.Object.Shape.Edges, start=1):
+#				targets.append( (sel.Object, 'Edge{}'.format(i)) )
+#				print(i)
+#		elif 'Face' in sel.SubElementNames[0]:
+#			faceEdges(sel.Object, sel.SubObjects[0], targets)
+#		else:
+#			for e in sel.SubElementNames:
+#				targets.append( (sel.Object, e) )
 
 	print ("Targets:", targets)
 		

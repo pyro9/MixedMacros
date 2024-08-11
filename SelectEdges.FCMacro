@@ -1,0 +1,67 @@
+
+#   Copyright (c) 2024 Steven James <pyro@4axisprinting.com>        
+#                                                                         
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Library General Public
+#   License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   This library  is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU Library General Public License for more details.
+#
+#   You should have received a copy of the GNU Library General Public
+#   License along with this library; see the file COPYING.LIB. If not,
+#   write to the Free Software Foundation, Inc., 59 Temple Place,
+#   Suite 330, Boston, MA  02111-1307, USA
+#                                                                         
+doc = App.ActiveDocument
+
+targets=[]
+
+def isSame(e,eprime):
+	if e.isEqual(eprime):
+		return True
+		
+	eprime.reverse()
+	if e.isEqual(eprime):
+		return True
+		
+	return False
+		
+def faceEdges(obj, sobj):
+	oe = obj.Shape.Edges
+	soe = sobj.Edges
+	for i,j in enumerate(oe,start=1):
+		for se in soe:
+			if isSame(se, j):
+				targets.append( (obj, 'Edge{}'.format(i)) )
+
+s = FreeCADGui.Selection.getCompleteSelection()
+
+for sel in s:
+	if '' == sel.SubElementNames[0]:
+		for i,j in enumerate(sel.Object.Shape.Edges, start=1):
+			targets.append( (sel.Object, 'Edge{}'.format(i)) )
+			print(i)
+	elif 'Face' in sel.SubElementNames[0]:
+		faceEdges(sel.Object, sel.SubObjects[0])
+	else:
+		for e in sel.SubElementNames:
+			targets.append( (sel.Object, e) )
+
+print ("Targets:", targets)
+
+obj=targets[0][0]
+hits=[]
+Gui.Selection.clearSelection()
+for o,e in targets:
+	if o!=obj:	
+		Gui.Selection.addSelection(obj, hits)
+		hits=[]
+		obj=o
+	hits.append(e)
+
+if len(hits):
+	Gui.Selection.addSelection(obj, hits)

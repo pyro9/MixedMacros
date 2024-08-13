@@ -18,8 +18,6 @@
 #                                                                         
 doc = App.ActiveDocument
 
-targets=[]
-
 def isSame(e,eprime):
 	if e.isEqual(eprime):
 		return True
@@ -38,23 +36,28 @@ def faceEdges(obj, sobj, res):
 
 s = FreeCADGui.Selection.getCompleteSelection()
 
-for sel in s:
-	if '' == sel.SubElementNames[0]:
-		for i,j in enumerate(sel.Object.Shape.Edges, start=1):
-			targets.append( (sel.Object, 'Edge{}'.format(i)) )
-	elif 'Face' in sel.SubElementNames[0]:
-		faceEdges(sel.Object, sel.SubObjects[0], targets)
-	else:
-		for e in sel.SubElementNames:
-			targets.append( (sel.Object, e) )
+def SelectionsToEdges(s):
+	targets=[]
+	
+	for sel in s:
+		if '' == sel.SubElementNames[0]:
+			for i,j in enumerate(sel.Object.Shape.Edges, start=1):
+				targets.append( (sel.Object, 'Edge{}'.format(i)) )
+		elif 'Face' in sel.SubElementNames[0]:
+			faceEdges(sel.Object, sel.SubObjects[0], targets)
+		else:
+			for e in sel.SubElementNames:
+				targets.append( (sel.Object, e) )
+	return targets
 
+targets = SelectionsToEdges(s)
 print ("Targets:", targets)
 
 obj=targets[0][0]
 hits=[]
 Gui.Selection.clearSelection()
 for o,e in targets:
-	if o!=obj:	
+	if o.Name != obj.Name:
 		Gui.Selection.addSelection(obj, hits)
 		hits=[]
 		obj=o

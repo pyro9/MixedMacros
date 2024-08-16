@@ -42,8 +42,13 @@ def SelectionsToEdges(s):
 	
 	for sel in s:
 		if '' == sel.SubElementNames[0]:
-			for i,j in enumerate(sel.Object.Shape.Edges, start=1):
-				targets.append( (sel.Object, 'Edge{}'.format(i)) )
+			if 'Edges' in sel.Object.__dir__():
+				o=sel.Object.Edges[0][0]
+				for e in sel.Object.Edges[0][1]:
+					targets.append( (o,e) )								
+			else:
+				for i,j in enumerate(sel.Object.Shape.Edges, start=1):
+					targets.append( (sel.Object, 'Edge{}'.format(i)) )
 		elif 'Face' in sel.SubElementNames[0]:
 			faceEdges(sel.Object, sel.SubObjects[0], targets)
 		else:

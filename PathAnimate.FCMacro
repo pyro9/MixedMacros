@@ -1,0 +1,51 @@
+from PySide import QtCore
+from math import modf
+from PySide import QtGui
+from PySide import QtWidgets
+
+App.Console.PrintMessage("running")
+
+doc = FreeCAD.ActiveDocument
+s = FreeCADGui.Selection.getCompleteSelection()
+obj = s[0].Object
+
+class PlayDLG(QtGui.QDialog):
+	def __init__(self, doc, obj, step=0.002):
+		super().__init__()
+		self.setWindowTitle("Path Animation")
+		self.buttonSlower = QtWidgets.QPushButton("Slower", self)
+		self.buttonFaster = QtWidgets.QPushButton("Faster", self)
+		self.buttonStop = QtWidgets.QPushButton("Stop", self)
+		
+		self.layout = QtGui.QHBoxLayout()
+		self.layout.addWidget(self.buttonSlower)
+		self.layout.addWidget(self.buttonStop)
+		self.layout.addWidget(self.buttonFaster)
+		
+		self.setLayout(self.layout)
+		self.buttonFaster.clicked.connect(self.doFaster)
+		self.buttonSlower.clicked.connect(self.doSlower)
+		self.buttonStop.clicked.connect(self.doStop)
+		self.obj = obj
+		self.step=step
+		self.doc=doc
+		self.timer = QtCore.QTimer()
+		self.timer.timeout.connect(self.update)
+		self.timer.start(100)
+		
+	def doFaster(self):
+		self.step += 0.0005
+	def doSlower(self):
+		self.step -= 0.0005
+		
+	def doStop(self):
+		self.timer.stop()
+		self.close()
+		
+	def update(self):
+		self.obj.MapPathParameter = modf(obj.MapPathParameter + self.step)[0]
+		self.doc.recompute(self.doc.findObjects())
+		
+pc = PlayDLG(doc, obj)
+pc.show()
+

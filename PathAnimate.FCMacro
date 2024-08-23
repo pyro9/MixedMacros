@@ -31,8 +31,8 @@ class PlayDLG(QtGui.QDialog):
 	def __init__(self, doc, obj, step=0.002):
 		super().__init__()
 		self.setWindowTitle("Path Animation")
-		self.buttonSlower = QtWidgets.QPushButton("Slower", self)
-		self.buttonFaster = QtWidgets.QPushButton("Faster", self)
+		self.buttonSlower = QtWidgets.QPushButton("<<", self)
+		self.buttonFaster = QtWidgets.QPushButton(">>", self)
 		self.buttonStop = QtWidgets.QPushButton("Stop", self)
 		
 		self.layout = QtGui.QHBoxLayout()
@@ -56,8 +56,10 @@ class PlayDLG(QtGui.QDialog):
 	def doSlower(self):
 		self.step -= 0.0005
 		
-	def doStop(self):
+	def closeEvent(self,x):
 		self.timer.stop()
+		
+	def doStop(self):
 		self.close()
 		
 	def update(self):

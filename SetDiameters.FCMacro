@@ -1,0 +1,31 @@
+
+	
+s =FreeCADGui.Selection.getCompleteSelection()
+fun=s[0].Object
+targets=[ e.Object for e in s[1:]]
+		
+def doFunc(x):
+	fun.setDatum('X', x)
+	fun.recompute()
+	return fun.getDatum('Y')
+
+def ExpandCompounds(li):
+	for e in li:
+		if 'Part::Compound'==e.TypeId:
+			for i in ExpandCompounds(e.OutList):
+				yield i
+		else:
+				yield e
+				
+def filter(li, nam):
+	for i in li:
+		try:
+			i.getDatum(nam)
+			yield i
+		except:
+			pass
+					
+for t in filter(ExpandCompounds(targets),'radius'):
+	print(t.Name)
+	t.setDatum('radius', doFunc(t.Placement.Base.z))
+	t.recompute()

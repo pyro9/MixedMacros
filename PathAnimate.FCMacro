@@ -56,11 +56,16 @@ class PlayDLG(QtGui.QDialog):
 	def doSlower(self):
 		self.step -= 0.0005
 		
-	def closeEvent(self,x):
-		self.timer.stop()
+	def doStop(self,x):
+		if self.timer.isActive():
+			self.timer.stop()
+			self.buttonStop.setText("Start")
+		else:
+			self.timer.start()
+			self.buttonStop.setText("Stop")
 		
-	def doStop(self):
-		self.close()
+	def closeEvent(self, x):
+		self.timer.stop()
 		
 	def update(self):
 		self.obj.MapPathParameter = modf(obj.MapPathParameter + self.step)[0]

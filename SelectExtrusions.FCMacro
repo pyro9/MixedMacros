@@ -20,18 +20,13 @@ dname=FreeCAD.ActiveDocument.Name
 s = FreeCADGui.Selection.getCompleteSelection()
 FreeCADGui.Selection.clearSelection()
 
-ol=[]
-
 def addExt(inlist):
 	for o in inlist:
 		if o.TypeId == 'Part::Extrusion':
-			ol.append(o)
+			yield o
 		elif o.TypeId == 'Part::Compound':
-			addExt(o.OutList)
-			
-olist = [e.Object for e in s]
-addExt(olist)
+			for i in addExt(o.OutList):
+				yield i
 
-if(ol):
-	for o in ol:
-		FreeCADGui.Selection.addSelection(FreeCAD.ActiveDocument.Name, o.Name)
+for o in addExt([e.Object for e in s]):
+		FreeCADGui.Selection.addSelection(dname, o.Name)

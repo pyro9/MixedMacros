@@ -27,7 +27,7 @@ doc = FreeCAD.ActiveDocument
 s = FreeCADGui.Selection.getCompleteSelection()
 obj = s[0].Object
 
-class PlayDLG(QtGui.QDialog):
+class PlayDLG(QtGui.QWidget):
 	def __init__(self, doc, obj, step=0.002):
 		super().__init__()
 		self.setWindowTitle("Path Animation")
@@ -71,6 +71,26 @@ class PlayDLG(QtGui.QDialog):
 		self.obj.MapPathParameter = modf(obj.MapPathParameter + self.step)[0]
 		self.doc.recompute(self.doc.findObjects())
 		
-pc = PlayDLG(doc, obj)
-pc.show()
+class PlayTask(PlayDLG):
+	def __init__(self, doc, obj):
+		super().__init__(doc,obj)
+		self.form=self
+		
+	def getStandardButtons(self):
+		return int(QtGui.QDialogButtonBox.Ok)
+		
+	def accept(self):
+		print("Accept")
+		self.finish()
+	def reject(self):
+		print("Reject")
+		self.finish()
 
+	def finish(self):
+		Gui.Control.closeDialog()
+		
+	
+#pc = PlayDLG(doc, obj)
+#pc.show()
+
+Gui.Control.showDialog(PlayTask(doc,obj))

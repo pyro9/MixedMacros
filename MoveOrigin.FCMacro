@@ -24,17 +24,27 @@ if sel.SubElementNames:
 	se=sel.SubElementNames[0]
 	ix = int(se[4:])-1
 	f=shp.Faces[ix]
+	centerObject=False
 else:
 	f=shp
+	ix=0
+	centerObject=True
 
-o=f.CenterOfMass - sel.Object.Placement.Base
-print("o=",o)
-mv=App.Vector(0,0,0)-o
-print("mv=",mv)
-mat = App.Matrix()
-mat.move(mv)
-s = shp.transformGeometry(mat)
-obj=Part.show(s)
+m=f.Placement.Matrix
+sh2 = shp.transformGeometry(m.inverse())
 
-obj.Placement.Base=o+sel.Object.Placement.Base
+if centerObject:
+	f2=sh2
+else:
+	f2=sh2.Faces[ix]
+
+m2=App.Matrix()
+m2.move(f2.CenterOfGravity)
+
+sh3=sh2.transformGeometry(m2.inverse())
+
+
+obj=Part.show(sh3)
+obj.Placement.Matrix=m*m2
+
 #obj.Placement.Base=o

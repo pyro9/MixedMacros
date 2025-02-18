@@ -43,8 +43,22 @@ m2.move(f2.CenterOfGravity)
 
 sh3=sh2.transformGeometry(m2.inverse())
 
+# now place the selected face flat on the XY plane
+if not centerObject:
+	from math import acos
+	f=sh3.Faces[ix]
+	
+	v=App.Vector(0,0,-1)
+	n=f.normalAt(1,1)
+	
+	r=App.Rotation(n.cross(v), Radian=acos(n*v))
+	m3=r.toMatrix()
+	sh4=sh3.transformGeometry(m3)
+else:
+	sh4=sh3
+	m3=App.Matrix()
 
-obj=Part.show(sh3)
-obj.Placement.Matrix=m*m2
+obj=Part.show(sh4)
+obj.Placement.Matrix=m*m2*m3.inverse()
 
 #obj.Placement.Base=o

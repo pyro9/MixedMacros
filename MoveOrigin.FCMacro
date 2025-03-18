@@ -32,7 +32,8 @@ else:
 
 # undo any placement on the shape
 m=f.Placement.Matrix
-sh2 = shp.transformGeometry(m.inverse())
+sh2=shp.copy()
+sh2.Placement=App.Placement()
 
 if centerObject:
 	f2=sh2

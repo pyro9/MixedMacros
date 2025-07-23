@@ -1,0 +1,81 @@
+# -*- coding: utf-8 -*-
+
+import FreeCAD
+import Part
+#import gui_polararray
+import Draft
+
+v = App.ActiveDocument.addObject('App::VarSet','Vars')
+v.addProperty('App::PropertyDistance', 'Diameter', 'Base', '')
+v.Diameter=5
+
+v.addProperty('App::PropertyDistance', 'DrillDiameter', 'Base', '')
+v.DrillDiameter=4
+
+v.addProperty('App::PropertyDistance', 'Height', 'Base', '')
+v.Height=10
+
+v.addProperty('App::PropertyInteger', 'Count', 'Base', '')
+v.Count=3
+
+c1=App.ActiveDocument.addObject("Part::Cylinder","Cylinder")
+App.ActiveDocument.ActiveObject.Label = "Cylinder"
+c1.setExpression('Height', f"<<{v.Name}>>.Height")
+c1.setExpression('Radius', f"<<{v.Name}>>.Diameter/2")
+
+# Object created at document root.
+c2=App.ActiveDocument.addObject("Part::Cylinder","Cylinder")
+App.ActiveDocument.ActiveObject.Label = "Cylinder"
+c2.setExpression('Radius', f"(<<{v.Name}>>.Diameter-<<{v.Name}>>.DrillDiameter)/2")
+
+# Object created at document root.
+App.ActiveDocument.recompute()
+
+
+c2.setExpression('Height', f"<<{v.Name}>>.Height")
+
+c2.AttachmentOffset = App.Placement(App.Vector(0.0000000000, 0.0000000000, 0.0000000000),  App.Rotation(0.0000000000, 0.0000000000, 0.0000000000))
+c2.MapReversed = False
+c2.AttachmentSupport = [(c1,'Edge2')]
+c2.MapPathParameter = 0.000000
+c2.MapMode = 'FrenetTN'
+c2.recompute()
+
+
+_obj_ = Draft.make_polar_array(c2, number=v.Count, angle=360.0, center=FreeCAD.Vector(0.0, 0.0, 0.0), use_link=False)
+_obj_.setExpression('NumberPolar', f"<<{v.Name}>>.Count")
+
+# Gui.Selection.addSelection('Unnamed5','Array')
+_obj_.Fuse = True
+Draft.autogroup(_obj_)
+App.ActiveDocument.recompute()
+# Gui.Selection.setPreselection(App.getDocument('Unnamed5').getObject('Array'),'',tp=2)
+### Begin command Part_Cone
+cone=App.ActiveDocument.addObject("Part::Cone","Cone")
+App.ActiveDocument.ActiveObject.Label = "Cone"
+# Object created at document root.
+App.ActiveDocument.recompute()
+
+
+
+cone.Radius1 = '2 mm'
+cone.setExpression('Radius1', f"<<{v.Name}>>.Diameter/2")
+
+
+cone.Radius2 = '0 mm'
+cone.setExpression('Height', f"<<{v.Name}>>.Height")
+
+
+
+from BOPTools import BOPFeatures
+bp = BOPFeatures.BOPFeatures(App.activeDocument())
+shp1 = bp.make_cut([_obj_.Name, cone.Name, ])
+App.ActiveDocument.recompute()
+
+from BOPTools import BOPFeatures
+bp = BOPFeatures.BOPFeatures(App.activeDocument())
+shp2=bp.make_cut([c1.Name, shp1.Name, ])
+App.ActiveDocument.recompute()
+
+shp2.Label='RibThread'
+v.Label = f"{shp2.Label}_vars"

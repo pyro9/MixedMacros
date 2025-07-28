@@ -6,16 +6,19 @@ import Part
 import Draft
 
 v = App.ActiveDocument.addObject('App::VarSet','Vars')
-v.addProperty('App::PropertyDistance', 'Diameter', 'Base', '')
+v.addProperty('App::PropertyDistance', 'Diameter', 'Dimensions', '')
 v.Diameter=5
 
-v.addProperty('App::PropertyDistance', 'DrillDiameter', 'Base', '')
+v.addProperty('App::PropertyDistance', 'DrillDiameter', 'Dimensions', '')
 v.DrillDiameter=4
 
-v.addProperty('App::PropertyDistance', 'Height', 'Base', '')
+v.addProperty('App::PropertyDistance', 'Height', 'Dimensions', '')
 v.Height=10
 
-v.addProperty('App::PropertyInteger', 'Count', 'Base', '')
+v.addProperty('App::PropertyDistance', 'BoreDepth', 'Dimensions', '')
+v.Height=10
+
+v.addProperty('App::PropertyInteger', 'Count', 'Dimensions', '')
 v.Count=3
 
 c1=App.ActiveDocument.addObject("Part::Cylinder","Cylinder")
@@ -32,7 +35,7 @@ c2.setExpression('Radius', f"(<<{v.Name}>>.Diameter-<<{v.Name}>>.DrillDiameter)/
 App.ActiveDocument.recompute()
 
 
-c2.setExpression('Height', f"<<{v.Name}>>.Height")
+c2.setExpression('Height', f"<<{v.Name}>>.Height-<<{v.Name}>>.BoreDepth")
 
 c2.AttachmentOffset = App.Placement(App.Vector(0.0000000000, 0.0000000000, 0.0000000000),  App.Rotation(0.0000000000, 0.0000000000, 0.0000000000))
 c2.MapReversed = False
@@ -58,13 +61,11 @@ App.ActiveDocument.recompute()
 
 
 
-cone.Radius1 = '2 mm'
-cone.setExpression('Radius1', f"<<{v.Name}>>.Diameter/2")
+cone.Radius1 = 0
+cone.setExpression('Radius2', f"<<{v.Name}>>.Diameter/2")
 
-
-cone.Radius2 = '0 mm'
-cone.setExpression('Height', f"<<{v.Name}>>.Height")
-
+cone.setExpression('Height', f"Radius2")
+cone.setExpression(".Placement.Base.z", f"<<{c2.Name}>>.Height-Radius2")
 
 
 from BOPTools import BOPFeatures

@@ -1,0 +1,139 @@
+# -*- coding: utf-8 -*-
+
+# Macro Begin: /home/pyro/.local/share/FreeCAD/Macro/testrt.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++
+import FreeCAD
+import Part
+import Commands
+import gui_polararray
+import gui_grid
+
+# Gui.runCommand('Std_DlgMacroRecord',0)
+### Begin command Std_VarSet
+App.activeDocument().addObject('App::VarSet','VarSet')
+App.ActiveDocument.getObject('VarSet').ViewObject.doubleClicked()
+### End command Std_VarSet
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Height = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Height = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Height = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Height = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Height = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Height = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Height = '1 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Height = '10 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Diameter = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').Diameter = '5 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').DrillDiameter = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').DrillDiameter = '4 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').DrillDiameter = '4.5 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').BoreDepth = '0 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').BoreDepth = '1 '
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').count = '0 '
+
+# Gui.Selection.addSelection('Unnamed4','VarSet')
+# Gui.Selection.clearSelection()
+### Begin command Part_Cylinder
+App.ActiveDocument.addObject("Part::Cylinder","Cylinder")
+App.ActiveDocument.ActiveObject.Label = "Cylinder"
+# Object created at document root.
+App.ActiveDocument.recompute()
+# Gui.SendMsgToActiveView("ViewFit")
+### End command Part_Cylinder
+# Gui.Selection.addSelection('Unnamed4','Cylinder')
+App.getDocument('Unnamed4').Cylinder.setExpression('Radius', u'<<v>>.Diameter / 2')
+App.getDocument('Unnamed4').Cylinder.setExpression('Height', u'<<v>>.Height')
+# Gui.Selection.clearSelection()
+### Begin command Part_Cylinder
+App.ActiveDocument.addObject("Part::Cylinder","Cylinder")
+App.ActiveDocument.ActiveObject.Label = "Cylinder"
+# Object created at document root.
+App.ActiveDocument.recompute()
+# Gui.SendMsgToActiveView("ViewFit")
+### End command Part_Cylinder
+# Gui.Selection.addSelection('Unnamed4','Cylinder001')
+App.getDocument('Unnamed4').Cylinder001.setExpression('Radius', u'(<<v>>.Diameter - <<v>>.DrillDiameter) / 2')
+App.getDocument('Unnamed4').Cylinder001.setExpression('Height', u'<<v>>.Height - <<v>>.BoreDepth')
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cylinder001')
+# Gui.Selection.setPreselection(App.getDocument('Unnamed4').getObject('Cylinder001'),'',tp=2)
+# Gui.runCommand('Part_EditAttachment',0)
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cylinder','Edge2',-0.54684,-2.43839,0)
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cylinder001')
+# Gui.runCommand('Draft_PolarArray',0)
+_obj_ = Draft.make_polar_array(App.ActiveDocument.Cylinder001, number=3, angle=360.0, center=FreeCAD.Vector(0.0, 0.0, 0.0), use_link=False)
+# Gui.Selection.addSelection('Unnamed4','Array')
+_obj_.Fuse = True
+Draft.autogroup(_obj_)
+App.ActiveDocument.recompute()
+App.getDocument('Unnamed4').Array.setExpression('NumberPolar', u'<<v>>.count')
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','VarSet')
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').count = 1
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').count = 2
+
+FreeCAD.getDocument('Unnamed4').getObject('VarSet').count = 3
+
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cylinder','Face1',0.554267,-2.43755,4.39035)
+# Gui.Selection.setPreselection(App.getDocument('Unnamed4').getObject('Cylinder'),'Face1',tp=2)
+### Begin command Part_Cone
+App.ActiveDocument.addObject("Part::Cone","Cone")
+App.ActiveDocument.ActiveObject.Label = "Cone"
+# Object created at document root.
+App.ActiveDocument.recompute()
+# Gui.SendMsgToActiveView("ViewFit")
+### End command Part_Cone
+# Gui.Selection.setPreselection(App.getDocument('Unnamed4').getObject('Cylinder'),'Face1',tp=2)
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cone')
+App.getDocument('Unnamed4').Cone.setExpression('Radius2', u'<<v>>.Diameter')
+FreeCAD.getDocument('Unnamed4').getObject('Cone').Radius1 = '0 mm'
+
+App.getDocument('Unnamed4').Cone.setExpression('Height', u'Radius2')
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cone')
+App.getDocument('Unnamed4').Cone.setExpression('Radius2', u'<<v>>.Diameter / 2')
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cone')
+App.getDocument('Unnamed4').Cone.setExpression('.Placement.Base.z', u'<<Cylinder001>>.Height - Radius2')
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cone')
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Array')
+# Gui.Selection.addSelection('Unnamed4','Cone')
+### Begin command Part_Cut
+from BOPTools import BOPFeatures
+bp = BOPFeatures.BOPFeatures(App.activeDocument())
+bp.make_cut(["Array", "Cone", ])
+App.ActiveDocument.recompute()
+### End command Part_Cut
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cylinder')
+# Gui.Selection.addSelection('Unnamed4','Cut')
+### Begin command Part_Cut
+from BOPTools import BOPFeatures
+bp = BOPFeatures.BOPFeatures(App.activeDocument())
+bp.make_cut(["Cylinder", "Cut", ])
+App.ActiveDocument.recompute()
+### End command Part_Cut
+# Gui.runCommand('Draft_ToggleGrid',0)
+# Gui.Selection.setPreselection(App.getDocument('Unnamed4').getObject('Cut'),'',tp=2)
+# Gui.Selection.setPreselection(App.getDocument('Unnamed4').getObject('Cylinder'),'',tp=2)
+# Macro End: /home/pyro/.local/share/FreeCAD/Macro/testrt.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++

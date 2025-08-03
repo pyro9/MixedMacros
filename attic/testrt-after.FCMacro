@@ -1,0 +1,85 @@
+# -*- coding: utf-8 -*-
+
+# Macro Begin: /home/pyro/.local/share/FreeCAD/Macro/testrt.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++
+import FreeCAD
+import Part
+
+
+
+v=App.activeDocument().addObject('App::VarSet','VarSet')
+
+
+v.addProperty('App::PropertyDistance', 'Height', 'Dimensions', '')
+v.Height=10
+v.addProperty('App::PropertyDistance', 'Diameter', 'Dimensions', '')
+v.Diameter=5
+v.addProperty('App::PropertyDistance', 'DrillDiameter', 'Dimensions', '')
+v.DrillDiameter=4
+v.addProperty('App::PropertyDistance', 'BoreDepth', 'Dimensions', '')
+v.Height=10
+v.addProperty('App::PropertyInteger', 'Count', 'Dimensions', '')
+v.Count=3
+
+
+
+c=App.ActiveDocument.addObject("Part::Cylinder","Cylinder")
+c.Label = "Cylinder"
+
+c.setExpression('Radius', f"<<{v.Name}>>.Diameter / 2")
+c.setExpression('Height', f'<<{v.Name}>>.Height')
+
+# Gui.Selection.clearSelection()
+### Begin command Part_Cylinder
+c2=App.ActiveDocument.addObject("Part::Cylinder","Cylinder")
+c2.Label = "Cylinder"
+
+c2.setExpression('Radius', f"(<<{v.Name}>>.Diameter-<<{v.Name}>>.DrillDiameter)/2")
+c2.setExpression('Height', f"<<{v.Name}>>.Height-<<{v.Name}>>.BoreDepth")
+
+c2.AttachmentOffset = App.Placement(App.Vector(0.0000000000, 0.0000000000, 0.0000000000),  App.Rotation(0.0000000000, 0.0000000000, 0.0000000000))
+c2.MapReversed = False
+c2.AttachmentSupport = [(c,'Edge2')]
+c2.MapPathParameter = 0.000000
+c2.MapMode = 'FrenetTN'
+
+_obj_ = Draft.make_polar_array(c2, number=3, angle=360.0, center=FreeCAD.Vector(0.0, 0.0, 0.0), use_link=False)
+# Gui.Selection.addSelection('Unnamed4','Array')
+_obj_.Fuse = True
+Draft.autogroup(_obj_)
+App.ActiveDocument.recompute()
+_obj_.setExpression('NumberPolar', f'<<{v.Name}>>.Count')
+
+### Begin command Part_Cone
+cone=App.ActiveDocument.addObject("Part::Cone","Cone")
+cone.Label = "Cone"
+
+cone.setExpression('Radius2', f'<<{v.Name}>>.Diameter/2')
+cone.Radius1 = '0 mm'
+
+cone.setExpression('Height', u'Radius2')
+
+cone.setExpression('.Placement.Base.z', f'<<{c2.Name}>>.Height - Radius2')
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cone')
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Array')
+# Gui.Selection.addSelection('Unnamed4','Cone')
+### Begin command Part_Cut
+from BOPTools import BOPFeatures
+bp = BOPFeatures.BOPFeatures(App.activeDocument())
+shp1=bp.make_cut([_obj_.Name, cone.Name, ])
+App.ActiveDocument.recompute()
+### End command Part_Cut
+# Gui.Selection.clearSelection()
+# Gui.Selection.addSelection('Unnamed4','Cylinder')
+# Gui.Selection.addSelection('Unnamed4','Cut')
+### Begin command Part_Cut
+from BOPTools import BOPFeatures
+bp = BOPFeatures.BOPFeatures(App.activeDocument())
+bp.make_cut([c.Name, shp1.Name, ])
+App.ActiveDocument.recompute() 
+### End command Part_Cut
+# Gui.runCommand('Draft_ToggleGrid',0)
+# Gui.Selection.setPreselection(App.getDocument('Unnamed4').getObject('Cut'),'',tp=2)
+# Gui.Selection.setPreselection(App.getDocument('Unnamed4').getObject('Cylinder'),'',tp=2)
+# Macro End: /home/pyro/.local/share/FreeCAD/Macro/testrt.FCMacro +++++++++++++++++++++++++++++++++++++++++++++++++

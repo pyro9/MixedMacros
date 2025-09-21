@@ -1,0 +1,93 @@
+#   Copyright (c) 2024 Steven James <pyro@4axisprinting.com>        
+#                                                                         
+#   This library is free software; you can redistribute it and/or
+#   modify it under the terms of the GNU Library General Public
+#   License as published by the Free Software Foundation; either
+#   version 2 of the License, or (at your option) any later version.
+#
+#   This library  is distributed in the hope that it will be useful,
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#   GNU Library General Public License for more details.
+#
+#   You should have received a copy of the GNU Library General Public
+#   License along with this library; see the file COPYING.LIB. If not,
+#   write to the Free Software Foundation, Inc., 59 Temple Place,
+#   Suite 330, Boston, MA  02111-1307, USA
+#                               
+
+import Draft
+                                          
+doc = App.ActiveDocument
+doc.openTransaction()
+
+def isSame(e,eprime):
+	if e.isEqual(eprime):
+		return True
+		
+	eprime.reverse()
+	if e.isEqual(eprime):
+		return True
+		
+	return False
+		
+def faceEdges(obj, sobj, res):
+	for i,j in enumerate(obj.Shape.Edges,start=1):
+		for se in sobj.Edges:
+			if isSame(se, j):
+				res.append( (obj, 'Edge{}'.format(i)) )
+
+def SelectionsToEdges(s):
+	targets=[]
+	
+	for sel in s:
+		if '' == sel.SubElementNames[0]:
+			if 'Edges' in sel.Object.__dir__():
+				o=sel.Object.Edges[0][0]
+				for e in sel.Object.Edges[0][1]:
+					targets.append( (o,e) )								
+			else:
+				for i,j in enumerate(sel.Object.Shape.Edges, start=1):
+					targets.append( (sel.Object, 'Edge{}'.format(i)) )
+		elif 'Face' in sel.SubElementNames[0]:
+			faceEdges(sel.Object, sel.SubObjects[0], targets)
+		else:
+			for e in sel.SubElementNames:
+				targets.append( (sel.Object, e) )
+	return targets
+	
+try:
+	s = FreeCADGui.Selection.getCompleteSelection()
+	subject=s[0].Object
+
+	targets = SelectionsToEdges(s[1:])
+	print ("Targets:", targets)
+		
+	sweeps=[]
+	for o,e in targets:
+		c=Draft.make_clone(subject)
+		c.AttachmentSupport = [o,e]
+		c.MapMode='NormalToEdge'
+		
+		swp=doc.addObject('Part::Sweep','Sweep')
+		
+		swp.Sections=[c]
+		swp.Spine=c.AttachmentSupport[0]
+		swp.Solid=True
+		swp.Frenet=True
+#		sweeps.append(swp.Name)
+		sweeps.append(swp)	
+	if len(sweeps) >1:
+#		from BOPTools import BOPFeatures
+#		bp = BOPFeatures.BOPFeatures(doc)
+#		bp.make_multi_fuse(sweeps)
+		c=App.activeDocument().addObject("Part::Compound","Sweeps")
+		c.Links = sweeps
+	
+except Exception as e :
+	doc.abortTransaction()
+	raise(e)
+else:
+	doc.commitTransaction()
+
+App.ActiveDocument.recompute()

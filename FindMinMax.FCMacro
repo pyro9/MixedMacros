@@ -16,6 +16,11 @@ deg90 = pi/2
 def Degrees(r):
 	return r*180/pi
 	
+def Spaceship(test, standard, tolerance=0.0):
+	if abs(test-standard) < tolerance:
+		return 0
+	return -1 if test<standard else -1               
+
 def float_range(start, stop, step):
 	current = start
 	while current < stop:

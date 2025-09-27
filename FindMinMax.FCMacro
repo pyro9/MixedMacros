@@ -12,6 +12,36 @@ e = sel.Object.Shape.__getattribute__(sel.SubElementNames[0])
 
 deg90 = pi/2
 
+cg=None
+down=None
+
+def computeDown(edge):
+	v=edge.valueAt(edge.FirstParameter) - edge.valueAt(edge.LastParameter)
+	v2 = edge.valueAt(edge.FirstParameter)-edge.valueAt(0.5)
+	
+	v3 = v.cross(v2)
+	v4=edge.tangentAt(0.5)
+	
+	vres = v3.cross(v4)
+	vres.normalize()
+	
+	# testing
+	vt = Part.Vertex(edge.valueAt(0.5))
+	l=vt.extrude(50*vres)
+	Part.show(l).Label='Down'
+	return vres
+	
+if e.isClosed():
+	cg = e.CenterOfGravity	# Yeah, Yeah, globals are bad
+else:	# for now, thi only works on the xy plane
+	down=App.Vector(0,-1,0)
+	# A test
+	v=e.valueAt(e.LastParameter) - e.valueAt(e.FirstParameter)
+	v.z=0
+	down=App.Vector(-v.y, v.x,0)
+	down.normalize()
+	print(down)
+	down = computeDown(e)
 
 def Degrees(r):
 	return r*180/pi
@@ -28,11 +58,13 @@ def float_range(start, stop, step):
 		current += step
 
 def computeSlopeTheta(edge, p):
-	cg=edge.CenterOfGravity
 	point = edge.valueAt(p)
 	tangent = edge.tangentAt(p)
-	bv = point-cg
-	bv.normalize()
+	if down:
+		bv=down
+	else:
+		bv = point-cg
+		bv.normalize()
 	try:
 		theta = acos(bv*tangent)
 	except:
@@ -48,21 +80,21 @@ def findMinMax(edge, start, end, tol=0.0001, level=5):
 	
 	print(f"MinMax enter: level: {level}, lastP:{lastP}, lastT: {lastT}, res: {res}")
 		
-	for p in float_range(start, end, pLen/100):
+	for p in float_range(start, end, pLen/1000):
 		theta = computeSlopeTheta(edge, p)
 
 		if not res:
 			res = Spaceship(theta, deg90,tol)
 			lastT = theta
 			lastP = p
-			print(f"Skipping: p={p}, newres={res}")
+#			print(f"Skipping: p={p}, newres={res}")
 			continue
 			
 		newres = Spaceship(theta, deg90, tol)
 		if not newres:
 				return p
 				
-#		print(f"MinMax progress: p:{p}, theta:{theta}, newres={newres}")
+		print(f"MinMax progress: p:{p}, theta:{theta}, newres={newres}")
 		if newres != res:
 			level-=1
 			if not level:
@@ -77,19 +109,18 @@ def findMinMax(edge, start, end, tol=0.0001, level=5):
 def findAllMinMax(edge, start, end, tol=0.0001, level=5):
 	all = []
 	p = start
-	pStep = (edge.LastParameter - edge.FirstParameter)/100
+	pStep = (edge.LastParameter - edge.FirstParameter)/1000
 	
 	theta = computeSlopeTheta(edge, p)
 	if not Spaceship(theta, deg90, tol):
 		all.append(p)
 		
-	while p+pStep < edge.LastParameter:
+	while p+pStep < edge.LastParameter: #remember, floating point might approximate
 		p = findMinMax(edge, p, edge.LastParameter, tol=tol, level=level)
 		if p == None:
 			break
 
 		all.append(p)
-#		p+= 0.0000001
 		
 	return all
 

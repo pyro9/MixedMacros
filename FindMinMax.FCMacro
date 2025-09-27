@@ -77,17 +77,19 @@ def findMinMax(edge, start, end, tol=0.0001, level=5):
 def findAllMinMax(edge, start, end, tol=0.0001, level=5):
 	all = []
 	p = start
+	pStep = (edge.LastParameter - edge.FirstParameter)/100
+	
 	theta = computeSlopeTheta(edge, p)
 	if not Spaceship(theta, deg90, tol):
 		all.append(p)
 		
-	while p < edge.LastParameter:
+	while p+pStep < edge.LastParameter:
 		p = findMinMax(edge, p, edge.LastParameter, tol=tol, level=level)
 		if p == None:
 			break
 
 		all.append(p)
-		p+= 0.0000001
+#		p+= 0.0000001
 		
 	return all
 

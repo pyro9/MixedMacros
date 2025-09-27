@@ -19,7 +19,7 @@ def Degrees(r):
 def Spaceship(test, standard, tolerance=0.0):
 	if abs(test-standard) < tolerance:
 		return 0
-	return -1 if test<standard else -1               
+	return -1 if test<standard else 1               
 
 def float_range(start, stop, step):
 	current = start
@@ -44,18 +44,24 @@ def findMinMax(edge, start, end, tol=0.0001, level=5):
 	pLen = end-start
 	lastP=start
 	lastT = computeSlopeTheta(edge,start)
-	res = lastT > deg90
+	res = Spaceship(lastT, deg90,tol)
 	
 	print(f"MinMax enter: level: {level}, lastP:{lastP}, lastT: {lastT}, res: {res}")
-	if abs(lastT-deg90)<tol:
-		return lastP
 		
 	for p in float_range(start, end, pLen/100):
 		theta = computeSlopeTheta(edge, p)
 
-		if abs(theta-deg90)<tol:
+		if not res:
+			res = Spaceship(theta, deg90,tol)
+			lastT = theta
+			lastP = p
+			print(f"Skipping: p={p}, newres={res}")
+			continue
+			
+		newres = Spaceship(theta, deg90, tol)
+		if not newres:
 				return p
-		newres = (theta > deg90)
+				
 #		print(f"MinMax progress: p:{p}, theta:{theta}, newres={newres}")
 		if newres != res:
 			level-=1

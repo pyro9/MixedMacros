@@ -15,32 +15,34 @@ deg90 = pi/2
 cg=None
 down=None
 
-def computeDown(edge):
-	v=edge.valueAt(edge.FirstParameter) - edge.valueAt(edge.LastParameter)
-	v2 = edge.valueAt(edge.FirstParameter)-edge.valueAt(0.5)
+def computeDown(edge, start=None, end=None):	# it might accidentally compute UP, but that works the same for this purpose
+	if start==None:
+		start=edge.FirstParameter
+	if end==None:
+		end=edge.LastParameter
+	mid = (start+end)/2
+
+	v=edge.valueAt(start) - edge.valueAt(end)
+	v2 = edge.valueAt(start)-edge.valueAt(mid)
 	
-	v3 = v.cross(v2)
-	v4=edge.tangentAt(0.5)
+	v3 = v.cross(v2)	# v3 is the hinge between the line to the end of the curve and to an arbitrary point on the curve
 	
-	vres = v3.cross(v4)
+	vres = v3.cross(v)	# vres is the hinge between the baseline v and the hinge computed above.
+						# It also happens to point down
 	vres.normalize()
 	
 	# testing
-	vt = Part.Vertex(edge.valueAt(0.5))
+	vt = Part.Vertex(edge.valueAt(mid))
 	l=vt.extrude(50*vres)
 	Part.show(l).Label='Down'
+	v4=edge.tangentAt(mid)
+	l2=vt.extrude(10*v4)
+	Part.show(l2).Label='Tangent'
 	return vres
 	
 if e.isClosed():
 	cg = e.CenterOfGravity	# Yeah, Yeah, globals are bad
 else:	# for now, thi only works on the xy plane
-	down=App.Vector(0,-1,0)
-	# A test
-	v=e.valueAt(e.LastParameter) - e.valueAt(e.FirstParameter)
-	v.z=0
-	down=App.Vector(-v.y, v.x,0)
-	down.normalize()
-	print(down)
 	down = computeDown(e)
 
 def Degrees(r):
@@ -98,7 +100,8 @@ def findMinMax(edge, start, end, tol=0.0001, level=5):
 		if newres != res:
 			level-=1
 			if not level:
-				raise Exception("Recursion too deep")
+				return (lastP+p)/2
+#				raise Exception("Recursion too deep")
 			return findMinMax(edge, lastP, p, tol=tol, level=level)
 		else:
 			lastP=p

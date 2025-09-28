@@ -20,6 +20,7 @@ def computeDown(edge, start=None, end=None):	# it might accidentally compute UP,
 		start=edge.FirstParameter
 	if end==None:
 		end=edge.LastParameter
+
 	mid = (start+end)/2
 
 	v=edge.valueAt(start) - edge.valueAt(end)
@@ -32,12 +33,13 @@ def computeDown(edge, start=None, end=None):	# it might accidentally compute UP,
 	vres.normalize()
 	
 	# testing
-	vt = Part.Vertex(edge.valueAt(mid))
-	l=vt.extrude(50*vres)
-	Part.show(l).Label='Down'
-	v4=edge.tangentAt(mid)
-	l2=vt.extrude(10*v4)
-	Part.show(l2).Label='Tangent'
+	if False:
+		vt = Part.Vertex(edge.valueAt(mid))
+		l=vt.extrude(50*vres)
+		Part.show(l).Label='Down'
+		v4=edge.tangentAt(mid)
+		l2=vt.extrude(10*v4)
+		Part.show(l2).Label='Tangent'
 	return vres
 	
 if e.isClosed():
@@ -62,11 +64,13 @@ def float_range(start, stop, step):
 def computeSlopeTheta(edge, p):
 	point = edge.valueAt(p)
 	tangent = edge.tangentAt(p)
-	if down:
-		bv=down
-	else:
-		bv = point-cg
+	if cg:
+		bv=point-cg
 		bv.normalize()
+	else:
+#		bv = computeDown(edge, U=p)
+		bv=down
+
 	try:
 		theta = acos(bv*tangent)
 	except:
@@ -80,7 +84,7 @@ def findMinMax(edge, start, end, tol=0.0001, level=5):
 	lastT = computeSlopeTheta(edge,start)
 	res = Spaceship(lastT, deg90,tol)
 	
-	print(f"MinMax enter: level: {level}, lastP:{lastP}, lastT: {lastT}, res: {res}")
+#	print(f"MinMax enter: level: {level}, lastP:{lastP}, lastT: {lastT}, res: {res}")
 		
 	for p in float_range(start, end, pLen/1000):
 		theta = computeSlopeTheta(edge, p)
@@ -96,7 +100,7 @@ def findMinMax(edge, start, end, tol=0.0001, level=5):
 		if not newres:
 				return p
 				
-		print(f"MinMax progress: p:{p}, theta:{theta}, newres={newres}")
+#		print(f"MinMax progress: p:{p}, theta:{theta}, newres={newres}")
 		if newres != res:
 			level-=1
 			if not level:
@@ -134,9 +138,14 @@ for p in params:
 	else:
 		print(None)
 
+pFactor = e.Length/( e.LastParameter - e.FirstParameter)
+d = [ p*pFactor for p in params ]
+
 
 vertices = [ Part.Vertex(e.valueAt(v)) for v in params ]
 c=Part.makeCompound(vertices)
 obj = Part.show(c)
 obj.Label='MinMax'
+obj.addProperty("App::PropertyFloatList", "Distances", "Result")
+obj.Distances = d
 

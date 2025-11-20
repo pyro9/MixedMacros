@@ -1,0 +1,68 @@
+import Draft, Part, FreeCADGui
+import FreeCAD as App
+import os
+from pathlib import Path
+from math import pi, sin,cos
+
+origin=App.Vector(0,0,0)
+
+x=3*cos(pi/4)
+y=3*sin(pi/4)
+
+v3=App.Vector(x,y,0)
+
+lv3 = Draft.makeWire([ origin, v3], closed=False, face=False, support=None)
+lv3.Label='PointAsVector'
+
+vt3= Part.Vertex(v3)
+vt=Part.show(vt3)
+vt.Label = 'point'
+
+v1=App.Vector(0,10,10)
+v2=App.Vector(10,5,15)
+
+line = Draft.makeWire([ v1, v2], closed=False, face=False, support=None)
+line.Label='path vector'
+
+
+z=App.Vector(0,0,1)
+
+circ = Part.makeCircle(3,origin,z,0,360)
+c=Part.show(circ)
+c.Label='Circle1'
+
+normal = Draft.makeWire([ origin, z*5], closed=False, face=False, support=None)
+normal.Label='Normal'
+
+axis = v2-v1
+axis.normalize()
+y=axis.cross(z)
+y.normalize()
+x=axis.cross(y)
+x.normalize()
+
+m=App.Matrix(x,y,axis)
+
+NewNormal = Draft.makeWire([ origin, axis*5], closed=False, face=False, support=None)
+NewNormal.Label='NewNormal'
+
+Hingex = Draft.makeWire([ origin, x*5], closed=False, face=False, support=None)
+Hingex.Label="HingeX"
+
+Hingey = Draft.makeWire([ origin, y*5], closed=False, face=False, support=None)
+Hingey.Label="HingeY"
+
+vm = m*v3
+
+lv4 = Draft.makeWire([ origin, vm], closed=False, face=False, support=None)
+lv4.Label='RotatedPointAsVector'
+
+circ2 = Part.makeCircle(3,origin,axis,0,360)
+c2=Part.show(circ2)
+c2.Label='RotatedCircle'
+
+
+vt=vm+v1
+
+lv5 = Draft.makeWire([ v1, vt], closed=False, face=False, support=None)
+lv5.Label='TranslatedPointAsVector'

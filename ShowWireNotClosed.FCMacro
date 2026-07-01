@@ -39,20 +39,23 @@ def cleanup_preview():
 
     for name in getattr(App, "wire_debug_created_names", []):
         if doc.getObject(name):
-            names_to_remove.append(name)
-
-    for obj in list(doc.Objects):
-        n = obj.Name
-        if any(tag in n for tag in ("_OpenWire_", "_Gap_", "__WireDebugPreview")):
-            if n not in names_to_remove:
-                names_to_remove.append(n)
-
-    for name in names_to_remove:
-        try:
-            if doc.getObject(name):
+            try:
                 doc.removeObject(name)
-        except Exception:
-            pass
+            except Exception as e:
+                print(e)
+
+#    for obj in list(doc.Objects):
+#        n = obj.Name
+#        if any(tag in n for tag in ("_OpenWire_", "_Gap_", "__WireDebugPreview")):
+#            if n not in names_to_remove:
+#                names_to_remove.append(n)
+
+#    for name in names_to_remove:
+#        try:
+#            if doc.getObject(name):
+#                doc.removeObject(name)
+#        except Exception:
+#            pass
 
     App.wire_debug_created_names = []
 

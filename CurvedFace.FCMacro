@@ -1,0 +1,11 @@
+s = FreeCADGui.Selection.getCompleteSelection()
+
+obj=s[0].Object
+edges = [ "Edge%u"%(i+1) for i in range(len(obj.Shape.Edges))]
+edges=tuple(edges)
+
+be = [(obj, edges)]
+
+cf=App.ActiveDocument.addObject("Surface::Filling", "CurvedFace")
+cf.BoundaryEdges = be
+cf.recompute()

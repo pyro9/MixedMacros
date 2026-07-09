@@ -1,0 +1,257 @@
+# FreeCAD Wire Debug
+# Hold hotkey = show open wires, release = clear highlights
+# By: Michael Groves - grover66@gmail.com
+
+import FreeCAD as App
+import FreeCADGui as Gui
+import Part
+
+try:
+    from PySide2 import QtCore, QtGui
+except Exception:
+    from PySide import QtCore, QtGui
+
+
+# ── Settings ─────────────────────────────────────────────────────────────────
+
+HOTKEY          = QtCore.Qt.Key_Q      # Key to hold for wire debug display
+HOTKEY_SHIFT    = False                # True = require Shift held with hotkey
+POINT_RADIUS    = 0.6                  # Radius of open-endpoint marker spheres
+TOL             = 0.001               # Vertex-matching tolerance
+
+
+# ── Internals ─────────────────────────────────────────────────────────────────
+
+def key(v, tol=TOL):
+    return (
+        round(v.x / tol),
+        round(v.y / tol),
+        round(v.z / tol),
+    )
+
+
+def cleanup_preview():
+    doc = App.ActiveDocument
+    if not doc:
+        return
+
+    names_to_remove = []
+
+    for name in getattr(App, "wire_debug_created_names", []):
+        if doc.getObject(name):
+            try:
+                doc.removeObject(name)
+            except Exception as e:
+                print(e)
+
+#    for obj in list(doc.Objects):
+#        n = obj.Name
+#        if any(tag in n for tag in ("_OpenWire_", "_Gap_", "__WireDebugPreview")):
+#            if n not in names_to_remove:
+#                names_to_remove.append(n)
+
+#    for name in names_to_remove:
+#        try:
+#            if doc.getObject(name):
+#                doc.removeObject(name)
+#        except Exception:
+#            pass
+
+    App.wire_debug_created_names = []
+
+    try:
+        doc.recompute()
+    except Exception:
+        pass
+
+
+def make_marker(doc, pt, name):
+    sphere = doc.addObject("Part::Sphere", name)
+    sphere.Radius = POINT_RADIUS
+    sphere.Placement.Base = pt
+    sphere.ViewObject.ShapeColor = (1.0, 0.0, 0.0)
+    sphere.ViewObject.Selectable = False
+    App.wire_debug_created_names.append(sphere.Name)
+    return sphere
+
+
+def make_wire_highlight(doc, wire, name):
+    obj = doc.addObject("Part::Feature", name)
+    obj.Shape = Part.makeCompound(wire.Edges)
+    obj.ViewObject.LineColor = (1.0, 0.35, 0.0)
+    obj.ViewObject.LineWidth = 7
+    obj.ViewObject.Selectable = False
+    App.wire_debug_created_names.append(obj.Name)
+    return obj
+
+
+def get_open_points(wire):
+    counts = {}
+    vectors = {}
+
+    for edge in wire.Edges:
+        verts = edge.Vertexes
+        if len(verts) < 2:
+            continue
+        for vert in (verts[0], verts[-1]):
+            pt = vert.Point
+            k = key(pt)
+            counts[k] = counts.get(k, 0) + 1
+            vectors[k] = pt
+
+    return [vectors[k] for k, count in counts.items() if count % 2 == 1]
+
+
+def get_shape_for_object(obj):
+    if obj.TypeId == "Sketcher::SketchObject":
+        try:
+            shape = obj.Shape
+            if shape and not shape.isNull() and shape.Wires:
+                return shape
+        except Exception:
+            pass
+        try:
+            edges = []
+            for geo in obj.Geometry:
+                try:
+                    edges.append(geo.toShape())
+                except Exception:
+                    pass
+            if edges:
+                return Part.makeCompound(edges)
+        except Exception:
+            pass
+        return None
+
+    if hasattr(obj, "Shape"):
+        try:
+            shape = obj.Shape
+            if shape and not shape.isNull():
+                return shape
+        except Exception:
+            pass
+
+    return None
+
+
+def show_preview():
+    print("preview")
+    doc = App.ActiveDocument
+    if not doc:
+        return
+
+    if getattr(App, "wire_debug_active", False):
+        return
+
+    App.wire_debug_active = True
+    App.wire_debug_created_names = []
+
+    try:
+        cleanup_preview()
+
+        selected = Gui.Selection.getSelection()
+        objects = selected if selected else doc.Objects
+        issues_found = 0
+
+        for obj in objects:
+            shape = get_shape_for_object(obj)
+            if shape is None:
+                continue
+
+            if shape.ShapeType == "Compound":
+                wires = shape.Wires
+                if not wires:
+                    try:
+                        wires = [Part.Wire(shape.Edges)]
+                    except Exception:
+                        continue
+            else:
+                wires = shape.Wires
+
+            for idx, wire in enumerate(wires):
+                try:
+                    if wire.isClosed():
+                        continue
+                except Exception:
+                    continue
+
+                issues_found += 1
+
+                make_wire_highlight(
+                    doc, wire,
+                    "{}_OpenWire_{}".format(obj.Name, idx)
+                )
+
+                for n, pt in enumerate(get_open_points(wire)):
+                    make_marker(
+                        doc, pt,
+                        "{}_Gap_{}_{}".format(obj.Name, idx, n)
+                    )
+
+        doc.recompute()
+
+        if issues_found:
+            try:
+                Gui.SendMsgToActiveView("ViewFit")
+            except Exception:
+                pass
+        else:
+            App.Console.PrintMessage("Wire debug: no open wires found.\n")
+
+    except Exception as e:
+        App.Console.PrintError("Wire debug error: {}\n".format(e))
+        App.wire_debug_active = False
+
+
+def hide_preview():
+    try:
+        cleanup_preview()
+    finally:
+        App.wire_debug_active = False
+
+
+class WireKeyListener(QtCore.QObject):
+
+    def eventFilter(self, obj, event):
+        if event.type() == QtCore.QEvent.KeyPress:
+            if event.key() == HOTKEY and not event.isAutoRepeat():
+                if not HOTKEY_SHIFT or (event.modifiers() & QtCore.Qt.ShiftModifier):
+                    show_preview()
+
+        elif event.type() == QtCore.QEvent.KeyRelease:
+            if not event.isAutoRepeat():
+                released_key = event.key() == HOTKEY
+                released_shift = (
+                    HOTKEY_SHIFT and event.key() == QtCore.Qt.Key_Shift
+                )
+                if released_key or released_shift:
+                    hide_preview()
+
+        return False
+
+
+# ── Install ───────────────────────────────────────────────────────────────────
+
+main_window = Gui.getMainWindow()
+
+if hasattr(App, "wire_debug_listener"):
+    try:
+        main_window.removeEventFilter(App.wire_debug_listener)
+        mdl.removeEventFilter(App.wire_debug_listener)
+    except Exception:
+        pass
+
+App.wire_debug_created_names = []
+App.wire_debug_active = False
+App.wire_debug_listener = WireKeyListener()
+main_window.installEventFilter(App.wire_debug_listener)
+
+cleanup_preview()
+
+App.Console.PrintMessage(
+    "\nWire debug installed.\n"
+    "Hold {} = show open wires\n"
+    "Release = clear highlights\n".format(
+        ("Shift+" if HOTKEY_SHIFT else "") + str(HOTKEY)
+    )
+)

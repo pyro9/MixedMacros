@@ -1,1 +1,31 @@
-../v1-1/Macro/getCameraVector.FCMacro
+from pivy import coin
+
+
+so=None
+
+sel = Gui.Selection.getSelectionEx()
+if sel:
+	sel=sel[0]
+	o = sel.Object
+
+	if sel.SubObjects:
+		so=sel.SubObjects[0]
+	else:
+		so=o
+	
+cam=Gui.ActiveDocument.ActiveView.getCameraNode()
+
+co=cam.orientation.getValue()
+
+sv=coin.SbVec3f(0,0,-1)
+mv = co.multVec(sv)
+(x,y,z) = mv.getValue()
+
+if so:
+	v=App.Vector(mv.getValue())
+	ver = Part.Vertex(so.CenterOfGravity)
+	l=ver.extrude(30*v)
+	o=Part.show(l)
+	o.Label = 'CameraVector'
+else:
+	App.Gui.doCommand(f"v=App.Vector({x},{y},{z})")
